@@ -1,14 +1,10 @@
 import vk_expansion
 
-import os
-import sys
-sys.path.append(os.path.dirname(os.path.abspath(__file__)))
-
 #options
 #///////////////////////////////////////////////////////////////////////////////
 MAIN = ['Search for user by id', 'Communities', 'Log out', 'Exit']			  #|
 USER = ['Private info', 'Download photos', 'Download videos', 'Back']		  #|
-COMMUNITIES = ['Description', 'Download albums', 'Download images from posts',#|
+COMMUNITIES = ['Description', 'Download albums', 'Download images from the posts',#|
 				'Download videos', 'Back'] 									  #|
 #\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
 
@@ -18,14 +14,18 @@ def show(options):
 			temp = {i+1: option for i, option in enumerate(options)}
 			for i, j in temp.items():
 				print('{}. {}'.format(i, j))
-			answer = int(input('>> '))
+			try:
+				answer = int(input('>> '))
+			except ValueError:
+				print('There are no such numbers, try again')
+				continue
 
 			return temp[answer]
 		except KeyError:
 			print('There are no such numbers, try again')
 
 def main():
-	
+	a = vk_expansion.Auth()
 	while True:
 		try:
 			echo_main = show(MAIN)
@@ -35,9 +35,11 @@ def main():
 
 		if echo_main == 'Search for user by id':
 			echo_user_id = input('Enter id\n>> ')
+			if echo_user_id == '':
+				continue
 			try:
 				vk_user = vk_expansion.User(echo_user_id)
-			except vk_expansion.UserError:
+			except vk_expansion.NoUserError:
 				print('There is no such user')
 				continue
 			name_user = vk_user.get_name(echo_user_id)
@@ -64,11 +66,17 @@ def main():
 
 		elif echo_main == 'Communities':
 			echo_com_id = input('Enter id of community\n>> ')
+			if echo_com_id == '':
+				continue
+
 			try:
 				vk_com = vk_expansion.Community(echo_com_id)
 			except vk_expansion.DeletedError:
 				print('Community is deactivated')
 				continue
+			except vk_expansion.NoCommunityError:
+				continue
+
 			name_com = vk_com.get_name(echo_com_id)
 
 			while True:
@@ -96,7 +104,7 @@ def main():
 					break
 
 		elif echo_main == 'Log out':
-			pass
+			a.log_out()
 
 		elif echo_main == 'Exit':
 			break

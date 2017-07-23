@@ -2,7 +2,7 @@ import json
 
 class Data_user:
 	
-	def __read(self):
+	def _read(self):
 		try:
 			data = json.load(open('data_user.json'))
 		except IOError:
@@ -10,7 +10,7 @@ class Data_user:
 
 		return data
 
-	def __write(self, data):
+	def _write(self, data):
 		with open('data_user.json', 'w') as file:
 				json.dump(data, file, indent=2)
 
@@ -19,19 +19,19 @@ class Data_user:
 			'login': login,
 			'pas': pas
 		}]
-		self.__write(person)
+		self._write(person)
 
-	def log_out(self, name_login):
-		self.__write([{}])
+	def log_out(self):
+		self._write([{}])
 
 	def check(self):
-		data = self.__read()
+		data = self._read()
 
-		if len(data) > 0:
+		if len(data) > 1:
 			return True
 		else:
 			return False
 
 	def get_data(self):
-		data = self.__read()
+		data = self._read()
 		return data

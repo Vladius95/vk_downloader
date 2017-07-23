@@ -14,7 +14,10 @@ APP_ID = 6109861
 class DeletedError(Exception):
 	pass
 
-class UserError(Exception):
+class NoUserError(Exception):
+	pass
+
+class NoCommunityError(Exception):
 	pass
 
 class Auth:
@@ -40,6 +43,9 @@ class Auth:
 
 	def get_session(self):
 		return self._vk
+
+	def log_out(self):
+		Data_user().log_out()
 
 class ObjectVK(metaclass=ABCMeta):
 
@@ -78,7 +84,7 @@ class User(ObjectVK):
 			self._id = self._user['uid']
 			self._name = self._user['first_name'] + ' ' + self._user['last_name']
 		except VkAPIError:
-			raise UserError
+			raise NoUserError
 			
 	def get(self, field):
 		return self._user[field]
@@ -259,6 +265,7 @@ class Community(ObjectVK):
 				raise DeletedError
 		except VkAPIError:
 			print('There is no such community')
+			raise NoCommunityError
 
 	def get(self, field):
 		return self._group[field]
@@ -304,11 +311,11 @@ class Community(ObjectVK):
 	def download_videos(self):
 		vk_videos = self.VideosCommunity(self._id, self._vk)
 		videos = vk_videos.get_videos()
-		if videos is None:
+		if len(videos) == 0:
 			print('No videos available')
 			return 
 
-		print(self._name)
+		print(others.scrape(self._name))
 		print('Select the numbers of the available videos you want to download.\n0 - to download all. -1 - back')
 		echo_com_videos = menu.show_dict(videos, 'title')
 

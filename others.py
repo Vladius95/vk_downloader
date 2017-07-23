@@ -2,7 +2,7 @@ import string
 
 def scrape(text):
 	chars = string.digits + string.punctuation + string.whitespace
-	return ''.join([i for i in text if i.isalpha() or i in chars])
+	return ''.join([i for i in text if i.isalpha() or i in chars]).strip()
 
 class ProgressBar:
 	def __init__(self, description, subject):

@@ -1,15 +1,10 @@
 import os
 import requests
-import getpass
-import platform
 from bs4 import BeautifulSoup
 
 class Downloader:
 	def __init__(self):
-		if 'Linux' in platform.system():
-			self._path = '{sep}home{sep}{username}{sep}Downloads{sep}'.format(sep=os.sep, username=getpass.getuser())
-		elif 'Windows' in platform.system():
-			self._path = os.path.abspath('Downloads')
+		self._path = os.path.abspath('Downloads')+os.sep
 
 	def create_dir(self, *args):
 		if not os.path.exists(self._path+os.path.join(*args)):
