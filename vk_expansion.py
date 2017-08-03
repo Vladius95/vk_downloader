@@ -75,6 +75,101 @@ class Media(metaclass=ABCMeta):
 	def get_albums(self):
 		pass
 
+class Photos(Media):
+	def __init__(self, ID, relations):
+		self._id = ID
+		self._vk = relations
+		try:
+			self._albums = self._vk.photos.getAlbums(owner_id=self._id, need_system=1, photo_sizes=1)
+		except VkAPIError:
+			self._albums = None
+
+	def get_albums(self):
+		return self._albums
+
+	def download_albums(self, numbers_albums, path):
+		dl = downloads.Downloader()
+
+		albums = [self._albums[i-1] for i in numbers_albums]
+		path.append(None)
+		for item, album in enumerate(albums):
+			photos = self._vk.photos.get(owner_id=self._id, album_id=album['aid'])
+			title_album = album['title']
+			path[-1] = title_album
+
+			if dl.create_dir(path):
+				print('The album {} already exist'.format(title_album))
+				time.sleep(1.5)
+			elif album['size'] == 0:
+				print('The album {} is empty'.format(title_album))
+				time.sleep(1.5)
+			else:
+				for photo in others.ProgressBar('({}/{}). {} is downloading'.format(item, len(albums), title_album), photos):
+					dl.download_photo(photo, path + [str(photo['pid'])])
+
+				print('The album {} is downloaded'.format(title_album))
+
+class Videos(Media):
+	def __init__(self, ID, relations):
+		self._vk = relations
+		self._id = ID
+		self._albums = self._vk.video.getAlbums(owner_id=self._id, need_system=1)[1:]
+
+	def get_albums(self):
+		return self._albums
+
+	def get_videos(self):
+		available_videos = []
+		videos = []
+		print('Please, wait. Videos are checked for download availability')
+
+		for album in self._albums:
+			try:
+				temp_videos = self._vk.video.get(owner_id=self._id, album_id=album['album_id'])
+			except VkAPIError:
+				return []
+			count = temp_videos[0]
+
+			if count > 100:
+				count -= 100
+				count_offset = 100
+				while True:
+					if count <= 100:
+						temp_videos = self._vk.video.get(owner_id=self._id, album_id=album['album_id'],
+							count=count, offset=count_offset)
+						videos.extend(temp_videos[1:])
+						break
+					else:
+						temp_videos = self._vk.video.get(owner_id=self._id, album_id=album['album_id'],
+							count=100, offset=count_offset)
+						videos.extend(temp_videos[1:])
+						count -= 100
+						count_offset += 100
+			else:
+				videos.extend(temp_videos[1:])
+			
+		dl = downloads.Downloader()
+		for video in videos:
+			if dl.check_download(video['player']):
+				if video['title'] not in [i['title'] for i in available_videos]:
+					available_videos.append(video)
+
+		return available_videos
+
+	def download_videos(self, videos, path):
+		dl = downloads.Downloader()
+		dl.create_dir(path)
+		path.append(None)
+		number = len(videos)
+
+		for item, video in enumerate(videos):
+			title = video['title']
+			path[-1] = title
+			print('({}/{}) {} is downloading...'.format(item+1, number, title))
+			dl.download_video(video['player'], path)
+
+			print('{} is downloaded'.format(title))
+
 class User(ObjectVK):
 	def __init__(self, ID):
 		try:
@@ -153,104 +248,31 @@ class User(ObjectVK):
 		if echo_com_videos is not None:
 			vk_videos.download_videos([videos[i-1] for i in echo_com_videos])
 
-	class PhotosUser(Media):
+	class PhotosUser(Photos):
 		def __init__(self, ID, relations):
 			self._id = User.get_id(ID)
-			self._vk = relations
-			try:
-				self._albums = self._vk.photos.getAlbums(owner_id=self._id, need_system=1, photo_sizes=1)
-			except VkAPIError:
-				self._albums = None
+			super().__init__(self._id, relations)
 
 		def get_albums(self):
-			return self._albums
+			return super().get_albums()
 
 		def download_albums(self, numbers_albums):
-			dl = downloads.Downloader()
-
-			albums = [self._albums[i-1] for i in numbers_albums]
-			name = User.get_name(self._id)
-			save_dir = 'Photos'
-
-			for item, album in enumerate(albums):
-				photos = self._vk.photos.get(owner_id=self._id, album_id=album['aid'])
-		
-				title_album = album['title']
-
-				if dl.create_dir(name, save_dir, title_album):
-					print('The album {} already exist'.format(title_album))
-					time.sleep(1.5)
-				elif album['size'] == 0:
-					print('The album {} is empty'.format(title_album))
-					time.sleep(1.5)
-				else:
-					for photo in others.ProgressBar('({}/{}). {} is downloading'.format(item, len(albums), title_album), photos):
-						dl.download_photo(photo, name, save_dir, title_album, str(photo['pid']))
-
-					print('The album {} is downloaded'.format(title_album))
+			super().download_albums(numbers_albums, [User.get_name(self._id), 'photos'])
 	
 
-	class VideosUser(Media):
+	class VideosUser(Videos):
 		def __init__(self, ID, relations):
-			self._vk = relations
-			self._id = ID
-
-			self._albums = self._vk.video.getAlbums(owner_id=self._id, need_system=1)[1:]
+			self._id = User.get_id(ID)
+			super().__init__(ID, relations)
 
 		def get_albums(self):
-			return self._albums
+			return super().get_albums()
 
 		def get_videos(self):
-			available_videos = []
-			videos = []
-			print('Please, wait. Videos are checked for download availability')
-
-			for album in self._albums:
-				try:
-					temp_videos = self._vk.video.get(owner_id=self._id, album_id=album['album_id'])
-				except VkAPIError:
-					return []
-				count = temp_videos[0]
-
-				if count > 100:
-					count -= 100
-					count_offset = 100
-					while True:
-						if count <= 100:
-							temp_videos = self._vk.video.get(owner_id=self._id, album_id=album['album_id'],
-								count=count, offset=count_offset)
-							videos.extend(temp_videos[1:])
-							break
-						else:
-							temp_videos = self._vk.video.get(owner_id=self._id, album_id=album['album_id'],
-								count=100, offset=count_offset)
-							videos.extend(temp_videos[1:])
-							count -= 100
-							count_offset += 100
-				else:
-					videos.extend(temp_videos[1:])
-			
-			dl = downloads.Downloader()
-			for video in videos:
-				if dl.check_download(video['player']):
-					if video['title'] not in [i['title'] for i in available_videos]:
-						available_videos.append(video)
-
-			return available_videos
+			return super().get_videos()
 
 		def download_videos(self, videos):
-			dl = downloads.Downloader()
-			name = User.get_name(self._id)
-			save_dir = 'Videos'
-			dl.create_dir(name, save_dir)
-			number = len(videos)
-
-			for item, video in enumerate(videos):
-				title = video['title']
-				print('({}/{}) {} is downloading...'.format(item+1, number, title))
-				dl.download_video(video['player'], name, save_dir, title)
-
-				print('{} is downloaded'.format(title))
+			super().download_videos(videos, [User.get_name(self._id), 'Videos'])
 
 
 class Community(ObjectVK):
@@ -321,54 +343,37 @@ class Community(ObjectVK):
 
 		vk_videos.download_videos([videos[i-1] for i in echo_com_videos])
 
-
-	class PhotosCommunity(Media):
+	class PhotosCommunity(Photos):
 		def __init__(self, ID, relations):
-			self._id = '-' + str(ID)
-			self._vk = relations
-			try:
-				self._albums = self._vk.photos.getAlbums(owner_id=self._id, need_system=1, photo_sizes=1)
-			except VkAPIError:
-				self._albums = None
+			self._id = '-'+str(ID)
+			super().__init__(self._id, relations)
 
 		def get_albums(self):
-			return self._albums
+			return super().get_albums()
 
 		def download_albums(self, numbers_albums):
-			dl = downloads.Downloader()
-
-			albums = [self._albums[i-1] for i in numbers_albums]
-			name = Community.get_name(self._id[1:])
-			save_dir = 'Images'
-
-			for item, album in enumerate(albums):
-				photos = self._vk.photos.get(owner_id=self._id, album_id=album['aid'])
-		
-				title_album = album['title']
-
-				if dl.create_dir(name, save_dir, title_album):
-					print('The album {} already exist'.format(title_album))
-					time.sleep(1.5)
-				elif album['size'] == 0:
-					print('The album {} is empty'.format(title_album))
-					time.sleep(1.5)
-				else:
-					for photo in others.ProgressBar('({}/{}). {} is downloading'.format(item, len(albums), title_album), photos):
-						dl.download_photo(photo, name, save_dir, title_album, str(photo['pid']))
-
-					print('The album {} is downloaded'.format(title_album))
-
+			super().download_albums(numbers_albums, [Community.get_name(self._id[1:]), 'Images'])
+			
 		def _get_posts(self, count):
 			posts = []
 			count_offset = 0
 			while True:
 				if count <= 100:
 					temp_posts = self._vk.wall.get(owner_id=self._id, count=count, offset=count_offset)[1:]
-					posts.extend([post['attachments'] for post in temp_posts])
+					
+					for post in temp_posts:
+						try:
+							posts.extend(post['attachments'])
+						except KeyError:
+							continue
 					return posts
 				else:
 					temp_posts = self._vk.wall.get(owner_id=self._id, count=100, offset=count_offset)[1:]
-					posts.extend([post['attachments'] for post in temp_posts])
+					for post in temp_posts:
+						try:
+							posts.extend(post['attachments'])
+						except KeyError:
+							continue
 					count_offset += 100
 					count -= 100
 			return posts
@@ -376,76 +381,28 @@ class Community(ObjectVK):
 		def download_posts(self, count):
 			photos_wall = self._get_posts(count)
 			dl = downloads.Downloader()
-			name = Community.get_name(self._id[1:])
-			dl.create_dir(name, 'Images', 'Posts' + str(count))
+			path = [Community.get_name(self._id[1:]), 'Images', 'Posts' + str(count)]
+			dl.create_dir(path)
 			count_images = 0
-			for photo in others.ProgressBar('Images from the posts are downloaded', photos_wall):
+			for photo in others.ProgressBar('Images from the posts are downloading', photos_wall):
 				try:
-					for item in photo:
-						dl.download_photo(item['photo'], name, 'Images', 'Posts'+str(count), str(item['photo']['pid']))
+					dl.download_photo(photo['photo'], path + [str(photo['photo']['pid'])])
 					count_images += 1
 				except KeyError:
-					continue
-			print('Download is over. {}/{} of the posts have images'.format(count_images, count))
+					continue	
+				
+			print('{} images from {} posts is downloaded'.format(count_images, count))
 
-	class VideosCommunity(Media):
+	class VideosCommunity(Videos):
 		def __init__(self, ID, relations):
 			self._id = '-' + str(ID)
-			self._vk = relations
-
-			self._albums = self._vk.video.getAlbums(owner_id=self._id, need_system=1)[1:]
+			super().__init__(self._id, relations)
 
 		def get_albums(self):
-			return self._albums
+			return super().get_albums()
 
 		def get_videos(self):
-			available_videos = []
-			videos = []
-			print('Please, wait. Videos are checked for download availability')
-
-			for album in self._albums:
-				try:
-					temp_videos = self._vk.video.get(owner_id=self._id, album_id=album['album_id'])
-				except VkAPIError:
-					return []
-				count = temp_videos[0]
-
-				if count > 100:
-					count -= 100
-					count_offset = 100
-					while True:
-						if count <= 100:
-							temp_videos = self._vk.video.get(owner_id=self._id, album_id=album['album_id'],
-								count=count, offset=count_offset)
-							videos.extend(temp_videos[1:])
-							break
-						else:
-							temp_videos = self._vk.video.get(owner_id=self._id, album_id=album['album_id'],
-								count=100, offset=count_offset)
-							videos.extend(temp_videos[1:])
-							count -= 100
-							count_offset += 100
-				else:
-					videos.extend(temp_videos[1:])
-			
-			dl = downloads.Downloader()
-			for video in videos:
-				if dl.check_download(video['player']):
-					if video['title'] not in [i['title'] for i in available_videos]:
-						available_videos.append(video)
-
-			return available_videos
+			return super().get_videos()
 
 		def download_videos(self, videos):
-			dl = downloads.Downloader()
-			name = Community.get_name(self._id[1:])
-			save_dir = 'Videos'
-			dl.create_dir(name, save_dir)
-			number = len(videos)
-
-			for item, video in enumerate(videos):
-				title = video['title']
-				print('({}/{}) {} is downloading...'.format(item+1, number, title))
-				dl.download_video(video['player'], name, save_dir, title)
-
-				print('{} is downloaded'.format(title))
+			super().download_videos(videos, [Community.get_name(self._id[1:]), 'Videos'])

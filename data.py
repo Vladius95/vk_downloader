@@ -26,10 +26,12 @@ class Data_user:
 
 	def check(self):
 		data = self._read()
-
-		if len(data) > 1:
-			return True
-		else:
+		try:
+			if len(data[0]) > 0:
+				return True
+			else:
+				return False
+		except IndexError:
 			return False
 
 	def get_data(self):

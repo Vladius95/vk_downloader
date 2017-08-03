@@ -6,7 +6,7 @@ class Downloader:
 	def __init__(self):
 		self._path = os.path.abspath('Downloads')+os.sep
 
-	def create_dir(self, *args):
+	def create_dir(self, args):
 		if not os.path.exists(self._path+os.path.join(*args)):
 			os.makedirs(self._path+os.path.join(*args))
 			return False
@@ -20,7 +20,7 @@ class Downloader:
 			except KeyError:
 				continue		
 
-	def download_photo(self, photo, *args):
+	def download_photo(self, photo, args):
 		with open(self._path+os.sep.join(args)+'.jpg', 'wb') as file_jpg:
 			file_jpg.write(self._get_content(photo))
 
@@ -33,7 +33,7 @@ class Downloader:
 		except AttributeError:
 			return False
 
-	def download_video(self, link, *args):
+	def download_video(self, link, args):
 		html = requests.get(link).text
 		soup = BeautifulSoup(html, 'html.parser')
 		
@@ -43,7 +43,3 @@ class Downloader:
 		with open(self._path+'{path}.mp4'.format(path=os.sep.join(args)), 'wb') as video_file:
 			for chunk in response.iter_content(1024000*4):
 				video_file.write(chunk)
-
-#v = Downloader()
-#v.create_dir('Video', '1')
-#print(v.check_download('https://vk.com/video_ext.php?oid=233432783&id=456239062&hash=d9180be16111e055'))
