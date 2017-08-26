@@ -88,16 +88,17 @@ class Photos(Media):
 		return self._albums
 
 	def download_albums(self, numbers_albums, path):
-		dl = downloads.Downloader()
-
+		dl = downloads.Downloader(path)
+		
 		albums = [self._albums[i-1] for i in numbers_albums]
 		path.append(None)
 		for item, album in enumerate(albums):
 			photos = self._vk.photos.get(owner_id=self._id, album_id=album['aid'])
 			title_album = album['title']
 			path[-1] = title_album
+			dl.set_path(path)
 
-			if dl.create_dir(path):
+			if dl.create_dir():
 				print('The album {} already exist'.format(title_album))
 				time.sleep(1.5)
 			elif album['size'] == 0:
@@ -105,7 +106,7 @@ class Photos(Media):
 				time.sleep(1.5)
 			else:
 				for photo in others.ProgressBar('({}/{}). {} is downloading'.format(item, len(albums), title_album), photos):
-					dl.download_photo(photo, path + [str(photo['pid'])])
+					dl.download_photo(photo, str(photo['pid']))
 
 				print('The album {} is downloaded'.format(title_album))
 
@@ -157,16 +158,14 @@ class Videos(Media):
 		return available_videos
 
 	def download_videos(self, videos, path):
-		dl = downloads.Downloader()
-		dl.create_dir(path)
-		path.append(None)
+		dl = downloads.Downloader(path)
+		dl.create_dir()
 		number = len(videos)
 
 		for item, video in enumerate(videos):
 			title = video['title']
-			path[-1] = title
 			print('({}/{}) {} is downloading...'.format(item+1, number, title))
-			dl.download_video(video['player'], path)
+			dl.download_video(video['player'], title)
 
 			print('{} is downloaded'.format(title))
 
@@ -380,13 +379,14 @@ class Community(ObjectVK):
 
 		def download_posts(self, count):
 			photos_wall = self._get_posts(count)
-			dl = downloads.Downloader()
+			
 			path = [Community.get_name(self._id[1:]), 'Images', 'Posts' + str(count)]
-			dl.create_dir(path)
+			dl = downloads.Downloader(path)
+			dl.create_dir()
 			count_images = 0
 			for photo in others.ProgressBar('Images from the posts are downloading', photos_wall):
 				try:
-					dl.download_photo(photo['photo'], path + [str(photo['photo']['pid'])])
+					dl.download_photo(photo['photo'], str(photo['photo']['pid']))
 					count_images += 1
 				except KeyError:
 					continue	

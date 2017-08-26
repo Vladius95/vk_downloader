@@ -3,12 +3,15 @@ import requests
 from bs4 import BeautifulSoup
 
 class Downloader:
-	def __init__(self):
-		self._path = os.path.abspath('Downloads')+os.sep
+	def __init__(self, path=[]):
+		self._path = os.sep.join(path)
 
-	def create_dir(self, args):
-		if not os.path.exists(self._path+os.path.join(*args)):
-			os.makedirs(self._path+os.path.join(*args))
+	def set_path(self, path):
+		self._path = os.sep.join(path)
+
+	def create_dir(self):
+		if not os.path.exists(self._path):
+			os.makedirs(self._path)
 			return False
 		return True
 
@@ -20,8 +23,8 @@ class Downloader:
 			except KeyError:
 				continue		
 
-	def download_photo(self, photo, args):
-		with open(self._path+os.sep.join(args)+'.jpg', 'wb') as file_jpg:
+	def download_photo(self, photo, name):
+		with open(self._path+os.sep+name+'.jpg', 'wb') as file_jpg:
 			file_jpg.write(self._get_content(photo))
 
 	def check_download(self, link):
@@ -33,13 +36,13 @@ class Downloader:
 		except AttributeError:
 			return False
 
-	def download_video(self, link, args):
+	def download_video(self, link, name):
 		html = requests.get(link).text
 		soup = BeautifulSoup(html, 'html.parser')
 		
 		video_URL = soup.find('div', id='page_wrap').find('source').get('src').split('?')[0]
 		response = requests.get(video_URL, stream=True)
 
-		with open(self._path+'{path}.mp4'.format(path=os.sep.join(args)), 'wb') as video_file:
+		with open(self._path+os.sep+name+'.mp4', 'wb') as video_file:
 			for chunk in response.iter_content(1024000*4):
 				video_file.write(chunk)

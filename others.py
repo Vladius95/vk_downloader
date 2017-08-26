@@ -26,9 +26,11 @@ class ProgressBar:
 
 		progress = (self._counter+1)/self._length
 		position = int(progress*100)//10
+	
 		if position >= 1:
-			self._progress_bar.pop(position)
-			self._progress_bar.insert(position, '#')
+			for i in range(1, position+1):
+				self._progress_bar.pop(i)
+				self._progress_bar.insert(i, '#')
 
 		print(self._description, ''.join(self._progress_bar), '{:.2%}'.format(progress), 
 			end='\r')
