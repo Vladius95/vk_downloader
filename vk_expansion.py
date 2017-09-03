@@ -7,7 +7,7 @@ import time
 import menu
 from vk.exceptions import VkAuthError, VkAPIError
 from abc import ABCMeta, abstractmethod
-from data import Data_user
+from data import DataUser
 
 APP_ID = 6109861
 
@@ -20,14 +20,37 @@ class NoUserError(Exception):
 class NoCommunityError(Exception):
 	pass
 
+def singleton(cls):
+	instances = {}
+	def getinstance():
+		if cls not in instances:
+			instances[cls] = cls()
+		return instances[cls]
+	return getinstance
+
+@singleton
 class Auth:
+
 	def __init__(self):
-		user = Data_user()
+		user = DataUser()
+		entered = False
 		while True:
-			if user.check():
-				data = user.get_data()
+			if user.isHasData():
+				data = user.getData()
 				login = data[0]['login']
-				pas = data[0]['pas']
+				if not entered:
+					tempPas = input('Password (0 - log out): ')
+					if tempPas == '0':
+						self.log_out()
+						continue
+					elif user.checkPas(tempPas):
+						pas = tempPas
+						entered = True
+					else:
+						print('Invalid password. Try again')
+						continue
+				else:
+					pas = tempPas
 			else:
 				print('Autorization')
 				print('Enter your mail and password')
@@ -36,7 +59,7 @@ class Auth:
 			try:
 				session = vk.AuthSession(app_id=APP_ID, user_login=login, user_password=pas, scope='friends,photos,video')
 				self._vk = vk.API(session)
-				user.log_in(login, pas)
+				user.logIn(login, pas)
 				break
 			except VkAuthError:
 				print('Invalid login or password, try again')
@@ -45,7 +68,7 @@ class Auth:
 		return self._vk
 
 	def log_out(self):
-		Data_user().log_out()
+		DataUser().logOut()
 
 class ObjectVK(metaclass=ABCMeta):
 
