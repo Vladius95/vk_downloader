@@ -117,16 +117,16 @@ class Photos(Media):
 		path.append(None)
 		for item, album in enumerate(albums):
 			photos = self._vk.photos.get(owner_id=self._id, album_id=album['aid'])
-			title_album = album['title']
+			title_album = others.scrape(album['title'])
 			path[-1] = title_album
 			dl.set_path(path)
 
 			if dl.create_dir():
 				print('The album {} already exist'.format(title_album))
-				time.sleep(1.5)
+				time.sleep(1)
 			elif album['size'] == 0:
 				print('The album {} is empty'.format(title_album))
-				time.sleep(1.5)
+				time.sleep(1)
 			else:
 				for photo in others.ProgressBar('({}/{}). {} is downloading'.format(item, len(albums), title_album), photos):
 					dl.download_photo(photo, str(photo['pid']))
@@ -186,7 +186,7 @@ class Videos(Media):
 		number = len(videos)
 
 		for item, video in enumerate(videos):
-			title = video['title']
+			title = others.scrape(video['title'])
 			print('({}/{}) {} is downloading...'.format(item+1, number, title))
 			dl.download_video(video['player'], title)
 
@@ -199,7 +199,7 @@ class User(ObjectVK):
 			self._user = self._vk.users.get(user_ids=ID, fields='sex,city,country,bdate,about,activities, \
 				books,education,games,contacts,country,interests,counters,tv,followers_count,movies,music')[0]
 			self._id = self._user['uid']
-			self._name = self._user['first_name'] + ' ' + self._user['last_name']
+			self._name = others.scrape(self._user['first_name'] + ' ' + self._user['last_name'])
 		except VkAPIError:
 			raise NoUserError
 			
@@ -212,7 +212,7 @@ class User(ObjectVK):
 
 	@classmethod
 	def get_name(cls, ID):
-		return cls(ID).get('first_name') + ' ' + cls(ID).get('last_name')
+		return others.scrape(cls(ID).get('first_name') + ' ' + cls(ID).get('last_name'))
 
 	def show_info(self):
 		country_id = self._user['country']
@@ -226,15 +226,18 @@ class User(ObjectVK):
 		sex_id = self._user['sex']
 		self._user['sex'] = 'women' if sex_id == 1 else 'men' if sex_id == 2 else 0
 
-		if 'university' in self._user.keys():
-			un_id = self._user['university']
-			faculty_id = self._user['faculty']
-			faculties = self._vk.database.getFaculties(university_id=un_id)
+		try:
+			if 'university' in self._user.keys():
+				un_id = self._user['university']
+				faculty_id = self._user['faculty']
+				faculties = self._vk.database.getFaculties(university_id=un_id)
 
-			for faculty in faculties[1:]:
-				if faculty['id'] == faculty_id:
-					self._user['faculty_name'] = faculty['title']
-					break
+				for faculty in faculties[1:]:
+					if faculty['id'] == faculty_id:
+						self._user['faculty_name'] = faculty['title']
+						break
+		except VkAPIError:
+			pass
 
 
 		for field, info in self._user.items():

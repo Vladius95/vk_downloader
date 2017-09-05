@@ -1,5 +1,7 @@
 For correct work it is need to execute the following commands in the command line:
 
-	1) pip install bs4
+	1) pip3 install bs4
 	2) pip3 install requests
 	3) pip3 install vk
+
+Also the windows console has some problems with correct display of symbols and it is not recommended to use.

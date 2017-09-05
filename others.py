@@ -1,8 +1,9 @@
 import string
 
-def scrape(text):
+def scrape(text):#console don't display all symbols
 	chars = string.digits + string.punctuation + string.whitespace
-	return ''.join([i for i in text if i.isalpha() or i in chars]).strip()
+	temp = ''.join([i for i in text if i.isalpha() or i in chars]).strip()
+	return 'No access symbols to display' if temp == '' else temp
 
 class ProgressBar:
 	def __init__(self, description, subject):
