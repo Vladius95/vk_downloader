@@ -1,12 +1,12 @@
 import vk_expansion
 
 #options
-#///////////////////////////////////////////////////////////////////////////////
-MAIN = ['Search for user by id', 'Communities', 'Log out', 'Exit']			  #|
-USER = ['Private info', 'Download photos', 'Download videos', 'Back']		  #|
+#///////////////////////////////////////////////////////////////////////////////////
+MAIN = ['Search for user by id', 'Communities', 'Log out', 'Exit']			 	  #|
+USER = ['Private info', 'Download photos', 'Download videos', 'Back']		 	  #|
 COMMUNITIES = ['Description', 'Download albums', 'Download images from the posts',#|
-				'Download videos', 'Back'] 									  #|
-#\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
+				'Download videos', 'Back'] 									  	  #|
+#\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
 
 def show(options):
 	while True:

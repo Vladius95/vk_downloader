@@ -39,7 +39,7 @@ class Auth:
 				data = user.getData()
 				login = data[0]['login']
 				if not entered:
-					tempPas = input('Password (0 - log out): ')
+					tempPas = 'grekpridurok1488' #input('Password (0 - log out): ')
 					if tempPas == '0':
 						self.log_out()
 						continue
@@ -175,7 +175,7 @@ class Videos(Media):
 		dl = downloads.Downloader()
 		for video in videos:
 			if dl.check_download(video['player']):
-				if video['title'] not in [i['title'] for i in available_videos]:
+				if video['title'] not in [video['title'] for video in available_videos]:
 					available_videos.append(video)
 
 		return available_videos
@@ -258,7 +258,7 @@ class User(ObjectVK):
 		print('Select the numbers of the albums you want to download.\n0 - to download all. -1 - back')
 		echo_user_photo = menu.show_dict(vk_photos.get_albums(), 'title')
 		if echo_user_photo is not None:
-			vk_photos.download_albums(echo_user_photo)
+			vk_photos.download_albums(echo_user_photo, [User.get_name(self._id), 'Photos'])
 
 	def download_videos(self):
 		vk_videos = self.VideosUser(self._id, self._vk)
@@ -271,33 +271,18 @@ class User(ObjectVK):
 		print('Select the numbers of the available videos you want to download.\n0 - to download all. -1 - back')
 		echo_com_videos = menu.show_dict(videos, 'title')
 		if echo_com_videos is not None:
-			vk_videos.download_videos([videos[i-1] for i in echo_com_videos])
+			vk_videos.download_videos([videos[i-1] for i in echo_com_videos], [User.get_name(self._id), 'Videos'])
 
 	class PhotosUser(Photos):
 		def __init__(self, ID, relations):
 			self._id = User.get_id(ID)
 			super().__init__(self._id, relations)
-
-		def get_albums(self):
-			return super().get_albums()
-
-		def download_albums(self, numbers_albums):
-			super().download_albums(numbers_albums, [User.get_name(self._id), 'photos'])
 	
 
 	class VideosUser(Videos):
 		def __init__(self, ID, relations):
 			self._id = User.get_id(ID)
 			super().__init__(ID, relations)
-
-		def get_albums(self):
-			return super().get_albums()
-
-		def get_videos(self):
-			return super().get_videos()
-
-		def download_videos(self, videos):
-			super().download_videos(videos, [User.get_name(self._id), 'Videos'])
 
 
 class Community(ObjectVK):
@@ -349,7 +334,7 @@ class Community(ObjectVK):
 		print('Select the numbers of the available videos you want to download.\n0 - to download all. -1 - back')
 		echo_com_photo = menu.show_dict(albums, 'title')
 			
-		vk_photos.download_albums(echo_com_photo)
+		vk_photos.download_albums(echo_com_photo, [Community.get_name(self._id[1:]), 'Images'])
 
 	def download_photo_posts(self, count):
 		vk_post_photos = self.PhotosCommunity(self._id, self._vk)
@@ -366,18 +351,12 @@ class Community(ObjectVK):
 		print('Select the numbers of the available videos you want to download.\n0 - to download all. -1 - back')
 		echo_com_videos = menu.show_dict(videos, 'title')
 
-		vk_videos.download_videos([videos[i-1] for i in echo_com_videos])
+		vk_videos.download_videos([videos[i-1] for i in echo_com_videos], [Community.get_name(self._id[1:]), 'Videos'])
 
 	class PhotosCommunity(Photos):
 		def __init__(self, ID, relations):
 			self._id = '-'+str(ID)
 			super().__init__(self._id, relations)
-
-		def get_albums(self):
-			return super().get_albums()
-
-		def download_albums(self, numbers_albums):
-			super().download_albums(numbers_albums, [Community.get_name(self._id[1:]), 'Images'])
 			
 		def _get_posts(self, count):
 			posts = []
@@ -423,12 +402,3 @@ class Community(ObjectVK):
 		def __init__(self, ID, relations):
 			self._id = '-' + str(ID)
 			super().__init__(self._id, relations)
-
-		def get_albums(self):
-			return super().get_albums()
-
-		def get_videos(self):
-			return super().get_videos()
-
-		def download_videos(self, videos):
-			super().download_videos(videos, [Community.get_name(self._id[1:]), 'Videos'])
