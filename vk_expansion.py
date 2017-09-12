@@ -39,7 +39,7 @@ class Auth:
 				data = user.getData()
 				login = data[0]['login']
 				if not entered:
-					tempPas = 'grekpridurok1488' #input('Password (0 - log out): ')
+					tempPas = input('Password (0 - log out): ')
 					if tempPas == '0':
 						self.log_out()
 						continue

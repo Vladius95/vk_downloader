@@ -1,4 +1,5 @@
 import others
+import re
 
 def show_dict(d, key):
 	while True:
@@ -9,7 +10,19 @@ def show_dict(d, key):
 		if answer == '-1':
 			return
 
-		digit = ''
+		numbers =  re.findall(r'\d+', answer)
+		if len(numbers) == 0:
+			print('There are no digits, try again')
+			continue
+
+		for i in range(len(numbers)):
+			numbers[i] = int(numbers[i])
+			if numbers[i] < 1 or numbers[i] > len(d):
+				print('There are digits out of range, try again')
+				break
+		else:
+			return list(set(numbers))
+		"""digit = ''
 		list_numbers = []
 		for i in answer:
 			if i.isdigit():
@@ -33,5 +46,5 @@ def show_dict(d, key):
 				print('There is no number {}, try again'.format(i))
 				break
 		else:
-			break
-	return list(set(list_numbers))
+			break"""
+	#return list(set(numbers))
